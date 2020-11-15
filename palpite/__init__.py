@@ -1,0 +1,1 @@
+""" Cartola FC tips. """
