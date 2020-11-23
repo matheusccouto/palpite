@@ -1,5 +1,6 @@
 """ Data requesting and wrangling. """
 
+import datetime
 import os
 from typing import Optional
 
@@ -7,8 +8,6 @@ import json
 import numpy as np
 import pandas as pd
 import requests
-
-import keys
 
 
 def request_to_df(url: str, key: Optional[str] = None, **kwargs) -> pd.DataFrame:
@@ -70,7 +69,6 @@ class TheOddsAPI:
     @staticmethod
     def clean_betting_lines(data: pd.DataFrame) -> pd.DataFrame:
         """ Clean betting lines dataframe. """
-
         data["date"] = [time_stamp.date() for time_stamp in data["commence_time"]]
 
         # Order is kind of random, so we cannot trust that the provider
@@ -116,8 +114,7 @@ class TheOddsAPI:
 
     def betting_lines(self) -> pd.DataFrame:
         """ Get betting lines data frame. """
-
-        # First check if the request wasn't already made, to avoid excessive requests.
+        # First check if the request wasn't already made to avoid excessive requests.
         cache_file_name = os.path.join("cache", "betting_lines.json")
         if not os.path.exists(cache_file_name):
 
@@ -143,7 +140,29 @@ class TheOddsAPI:
         return self.clean_betting_lines(pd.read_json(cache_file_name))
 
 
-if __name__ == "__main__":
+class FootballData:
+    """ A football-data.co.uk data wrangler. """
 
-    the_odds_api = TheOddsAPI(keys.THE_ODDS_API)
-    print(the_odds_api.betting_lines())
+    @staticmethod
+    def _format_date(series: pd.Series) -> pd.Series:
+        """ Format date series. """
+        return pd.Series(
+            [
+                datetime.date(*[int(val) for val in date.split("/")[::-1]])
+                for date in series
+            ]
+        )
+
+    def historical_data(self, data: pd.DataFrame):
+        """ Clean historic data. """
+
+        new = pd.DataFrame()
+
+        new["date"] = self._format_date(data["Date"])
+        new["home_team"] = data["Home"]
+        new["away_team"] = data["Away"]
+        new["home_team_odds"] = data["AvgH"]
+        new["draw_odds"] = data["AvgD"]
+        new["away_team_odds"] = data["AvgA"]
+
+        return new
