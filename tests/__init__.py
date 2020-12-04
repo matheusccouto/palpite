@@ -1,1 +1,1 @@
-""" Palpite unit-tests. """
+""" Unit-tests. """

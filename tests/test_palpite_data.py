@@ -1,49 +1,76 @@
 """ palpite.data unit-tests. """
 
-import datetime
 import os
 
 import pandas as pd
 
-from palpite import data
+import palpite.data
 
 THIS_FOLDER = os.path.dirname(__file__)
 
 
-class TestFootballData:
-    """ Test football-data.co.uk data wrangler. """
-
-    dataset_path = os.path.join(
-        THIS_FOLDER, "data", "football_data_co_uk", "historical_betting_lines.csv"
-    )
+class TestClubsAndOddsMerge:
+    """ Test functions related to merging odds to the clubs dataframe. """
 
     @classmethod
     def setup_class(cls):
-        """ Setup tests. """
-        dataset = pd.read_csv(cls.dataset_path)
-        football_data = data.FootballData()
-        cls.row = football_data.historical_data(dataset).loc[0]
+        """ Setup class. """
+        cartola_api = palpite.data.CartolaFCAPI()
+        cls.clubs = cartola_api.clubs()
 
-    def test_date(self):
-        """ Test date column. """
-        assert self.row["date"] == datetime.date(year=2012, month=11, day=11)
+        cls.odds = pd.read_csv(
+            os.path.join(THIS_FOLDER, "data", "odds_api", "odds.csv"), index_col=0
+        )
 
-    def test_home_team(self):
-        """ Test home team column. """
-        assert self.row["home_team"] == "Palmeiras"
+    def test_get_club_id(self):
+        """ Test get_club_id function. """
+        club_id = palpite.data.get_club_id(
+            [
+                "Cuiaba",
+                "sao paulo",
+                "Bragantino-SP",
+                "atletico Mineiro",
+                "Gremio",
+                "vitoria",
+                "Criciuma",
+                "parana",
+                "Goias",
+                "Atletico paranaense",
+                "Avai",
+                "aMeRiCa MiNeIrO",
+                "Nautico",
+                "America-RN",
+                "Atletico Goianiense",
+            ]
+        )
+        assert None not in club_id
 
-    def test_away_team(self):
-        """ Test away team column. """
-        assert self.row["away_team"] == "Fluminense"
+    def test_merge_clubs_and_odds_exists(self):
+        """ Test function merge_clubs_and_odds on teams that have odds. """
+        merged = palpite.data.merge_clubs_and_odds(clubs=self.clubs, odds=self.odds)
+        assert merged.loc[266]["nome"] == "Fluminense"
+        assert round(merged.loc[266]["win_odds"], 2) == 3.26
+        assert round(merged.loc[266]["draw_odds"], 2) == 2.10
+        assert round(merged.loc[266]["lose_odds"], 2) == 3.43
 
-    def test_home_team_odds(self):
-        """ Test home team odds column. """
-        assert self.row["home_team_odds"] == 2.44
+    def test_merge_clubs_and_odds_nan(self):
+        """ Test function merge_clubs_and_odds on teams that do not have odds. """
+        merged = palpite.data.merge_clubs_and_odds(clubs=self.clubs, odds=self.odds)
+        assert merged.loc[364]["nome"] == "Remo"
+        assert pd.isna(merged.loc[364]["win_odds"])
+        assert pd.isna(merged.loc[364]["draw_odds"])
+        assert pd.isna(merged.loc[364]["lose_odds"])
 
-    def test_away_team_odds(self):
-        """ Test home team odds column. """
-        assert self.row["away_team_odds"] == 2.7
-
-    def test_draw_odds(self):
-        """ Test draw odds column. """
-        assert self.row["draw_odds"] == 3.3
+    def test_get_club_data(self):
+        """ Test function get_clubs """
+        # This is a fake key, but there is no problem
+        # because it will use the cache folder.
+        clubs = palpite.data.get_clubs_with_odds(key=1902)
+        assert clubs.loc[266]["nome"] == "Fluminense"
+        assert round(clubs.loc[266]["win_odds"], 2) == 3.26
+        assert round(clubs.loc[266]["draw_odds"], 2) == 2.10
+        assert round(clubs.loc[266]["lose_odds"], 2) == 3.43
+        assert clubs.loc[364]["nome"] == "Remo"
+        assert pd.isna(clubs.loc[364]["win_odds"])
+        assert pd.isna(clubs.loc[364]["draw_odds"])
+        assert pd.isna(clubs.loc[364]["lose_odds"])

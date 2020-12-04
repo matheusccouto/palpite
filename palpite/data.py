@@ -1,13 +1,14 @@
 """ Data requesting and wrangling. """
 
-import datetime
-import os
-from typing import Optional
-
 import json
+import os
+from typing import Optional, Sequence, List
+
 import numpy as np
 import pandas as pd
 import requests
+
+from palpite import THIS_FOLDER
 
 
 def request_to_df(url: str, key: Optional[str] = None, **kwargs) -> pd.DataFrame:
@@ -22,20 +23,17 @@ def request_to_df(url: str, key: Optional[str] = None, **kwargs) -> pd.DataFrame
     if isinstance(data, dict):
         data = data.values()
 
-    data_frame = pd.DataFrame()
-    for row in data:
-        data_frame = data_frame.append(row, ignore_index=True)
-    return data_frame
+    return pd.DataFrame(data)
 
 
-class CartolaFC:
+class CartolaFCAPI:
     """ A high level wrapper for the Cartola FC API. """
 
     host = r"https://api.cartolafc.globo.com/"
 
     def clubs(self) -> pd.DataFrame:
         """ Get clubs data frame. """
-        return request_to_df(self.host + r"atletas/mercado", "clubes")
+        return request_to_df(self.host + r"clubes").set_index("id")
 
     def matches(self) -> pd.DataFrame:
         """ Get next matches data frame. """
@@ -43,7 +41,9 @@ class CartolaFC:
 
     def players(self) -> pd.DataFrame:
         """ Get players data frame. """
-        return request_to_df(self.host + r"atletas/mercado", "atletas")
+        return request_to_df(self.host + r"atletas/mercado", "atletas").set_index(
+            "atleta_id"
+        )
 
     def schemes(self):
         """ Get schemes data frame. """
@@ -140,29 +140,73 @@ class TheOddsAPI:
         return self.clean_betting_lines(pd.read_json(cache_file_name))
 
 
-class FootballData:
-    """ A football-data.co.uk data wrangler. """
+def get_club_id(club_names: Sequence[str]) -> List[int]:
+    """ Get club IDs from a sequence of names."""
+    # Load club names mapping.
+    with open(
+        os.path.join(THIS_FOLDER, "data", "clubs_names.json"), encoding="utf-8"
+    ) as file:
+        names_mapping = json.load(file)["nome"]
 
-    @staticmethod
-    def _format_date(series: pd.Series) -> pd.Series:
-        """ Format date series. """
-        return pd.Series(
-            [
-                datetime.date(*[int(val) for val in date.split("/")[::-1]])
-                for date in series
-            ]
-        )
+    # Iterate through the sequence passe by the user.
+    club_id = []
+    for club in club_names:
+        # iterate through the mapping.
+        for i, names in names_mapping.items():
+            # If the mapping is present in values, append the club ID.
+            if club.lower() in [name.lower() for name in names]:
+                club_id.append(i)
+                break
+        # If it iterated through all keys without finding it, append None.
+        else:
+            club_id.append(None)
 
-    def historical_data(self, data: pd.DataFrame):
-        """ Clean historic data. """
+    return club_id
 
-        new = pd.DataFrame()
 
-        new["date"] = self._format_date(data["Date"])
-        new["home_team"] = data["Home"]
-        new["away_team"] = data["Away"]
-        new["home_team_odds"] = data["AvgH"]
-        new["draw_odds"] = data["AvgD"]
-        new["away_team_odds"] = data["AvgA"]
+def merge_clubs_and_odds(clubs: pd.DataFrame, odds: pd.DataFrame) -> pd.DataFrame:
+    """ Merge clubs and odds dataframes. """
+    # Avoid in-place transformations
+    clubs = clubs.copy()
+    odds = odds.copy()
 
-        return new
+    # Transform names into IDs.
+    odds["home_team"] = get_club_id(odds["home_team"])
+    odds["away_team"] = get_club_id(odds["away_team"])
+
+    # Create a new frame with the home team as index and and rename columns to merge.
+    odds_home = odds.set_index("home_team", drop=True)
+    odds_home = odds_home.rename(
+        {"home_team_odds": "win_odds", "away_team_odds": "lose_odds",}, axis=1,
+    )
+
+    # Create a new frame with the away team as index and and rename columns to merge.
+    odds_away = odds.set_index("away_team", drop=True)
+    odds_away = odds_away.rename(
+        {"away_team_odds": "win_odds", "home_team_odds": "lose_odds",}, axis=1,
+    )
+
+    # Merge home and way datasets.
+    odds = odds_home.append(odds_away)
+    # If a team has two games on the odds data frame, keep only the first.
+    odds = odds.sort_values("date")[["win_odds", "draw_odds", "lose_odds"]]
+    odds = odds.loc[odds.index.drop_duplicates()]
+
+    # Merge clubs and odds dataframes. Make sure both indexes are from the same type
+    odds.index = odds.index.astype(int)
+    clubs.index = clubs.index.astype(int)
+    return pd.merge(clubs, odds, how="outer", left_index=True, right_index=True)
+
+
+def get_clubs_with_odds(key):
+    """ Get clubs data with odds included.. """
+    # Get odds dataset.
+    odds_api = TheOddsAPI(key=key)
+    odds = odds_api.betting_lines()
+
+    # Get clubs dataset.
+    cartola_api = CartolaFCAPI()
+    clubs = cartola_api.clubs()
+
+    # Merge them.
+    return merge_clubs_and_odds(clubs, odds)

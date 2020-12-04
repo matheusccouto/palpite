@@ -4,21 +4,34 @@ This dataset mix Cartola FC and game probabilities. Each row represents a player
 
 ## Features
 
+* year: Cartola FC season.
+* name: Player name.
+* round: Brasileirão round.
+* club: Player club.
 * position: Player's position. 
+  
     0. Coach
     1. Goalkeeper
     2. Defender
     3. Fullback
     4. Midfielder
     5. Forward
+  
 * status: Player's status.
-    0. Doubt
-    1. Expected
+  
+    0. Suspended
+    1. Injured
+    2. Null
+    3. Doubt
+    4. Expected
+  
 * matches: Amount o matches that the player has played.
 * mean: Player's points mean considering only games he has played.
-* win: Probability of his team winning.
-* lose: Probability of his team losing.
-* draw: Probability of his team drawing.
+* price: Player's price at selection time.
+* variation: How much price changed from last match.
+* win: Player's team winning odds.
+* lose: Player's team losing odds.
+* draw: Player's team drawing odds.
 * point: Amount of points the player scored on the match.
 
 Author:
