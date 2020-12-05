@@ -63,8 +63,9 @@ class TheOddsAPI:
 
     host = r"https://api.the-odds-api.com/v3/"
 
-    def __init__(self, key: str):
+    def __init__(self, key: str, cache_folder: Optional[str] = None):
         self.key = key
+        self.cache_folder = "cache" if cache_folder is None else cache_folder
 
     @staticmethod
     def clean_betting_lines(data: pd.DataFrame) -> pd.DataFrame:
@@ -115,7 +116,7 @@ class TheOddsAPI:
     def betting_lines(self) -> pd.DataFrame:
         """ Get betting lines data frame. """
         # First check if the request wasn't already made to avoid excessive requests.
-        cache_file_name = os.path.join("cache", "betting_lines.json")
+        cache_file_name = os.path.join(self.cache_folder, "betting_lines.json")
         if not os.path.exists(cache_file_name):
 
             # Create cache folder if doesn't exist yet.
@@ -190,7 +191,8 @@ def merge_clubs_and_odds(clubs: pd.DataFrame, odds: pd.DataFrame) -> pd.DataFram
     odds = odds_home.append(odds_away)
     # If a team has two games on the odds data frame, keep only the first.
     odds = odds.sort_values("date")[["win_odds", "draw_odds", "lose_odds"]]
-    odds = odds.loc[odds.index.drop_duplicates()]
+    index = odds.index.drop_duplicates()
+    odds = odds.loc[index]
 
     # Merge clubs and odds dataframes. Make sure both indexes are from the same type
     odds.index = odds.index.astype(int)
@@ -198,10 +200,10 @@ def merge_clubs_and_odds(clubs: pd.DataFrame, odds: pd.DataFrame) -> pd.DataFram
     return pd.merge(clubs, odds, how="outer", left_index=True, right_index=True)
 
 
-def get_clubs_with_odds(key):
+def get_clubs_with_odds(key: str, cache_folder: Optional[str] = None) -> pd.DataFrame:
     """ Get clubs data with odds included.. """
     # Get odds dataset.
-    odds_api = TheOddsAPI(key=key)
+    odds_api = TheOddsAPI(key=key, cache_folder=cache_folder)
     odds = odds_api.betting_lines()
 
     # Get clubs dataset.

@@ -65,7 +65,9 @@ class TestClubsAndOddsMerge:
         """ Test function get_clubs """
         # This is a fake key, but there is no problem
         # because it will use the cache folder.
-        clubs = palpite.data.get_clubs_with_odds(key=1902)
+        clubs = palpite.data.get_clubs_with_odds(
+            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
+        )
         assert clubs.loc[266]["nome"] == "Fluminense"
         assert round(clubs.loc[266]["win_odds"], 2) == 3.26
         assert round(clubs.loc[266]["draw_odds"], 2) == 2.10

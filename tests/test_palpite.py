@@ -15,7 +15,7 @@ class TestClub:
     def setup_class(cls):
         """ Setup class. """
         cls.clubs = palpite.data.get_clubs_with_odds(
-            1902
+            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
         )  # Fake key. But doesn't matter.
         cls.club = palpite.Club(266, clubs=cls.clubs)
 
@@ -60,7 +60,7 @@ class TestAthlete:
         """ Setup class. """
         # Get clubs dataset.
         cls.clubs = palpite.data.get_clubs_with_odds(
-            1902
+            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
         )  # Fake key. But doesn't matter.
 
         # Get players.
@@ -205,7 +205,9 @@ class TestLineUp:
         """ Setup class. """
 
         # Get clubs
-        clubs = palpite.data.get_clubs_with_odds(1902)  # Fake key.
+        clubs = palpite.data.get_clubs_with_odds(
+            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
+        )  # Fake key.
 
         # Get players
         cartola_api = palpite.data.CartolaFCAPI()
@@ -216,6 +218,9 @@ class TestLineUp:
 
         # Get all players.
         players = palpite.create_all_players(players, clubs)
+        # Filter team
+        players = [player for player in players if player.club.id == 266]
+
         cls.goalkeepers = [player for player in players if player.position == 1]
         cls.fullbacks = [player for player in players if player.position == 2]
         cls.defenders = [player for player in players if player.position == 3]
@@ -240,7 +245,7 @@ class TestLineUp:
 
     def test_invalid_line_up1(self):
         """ Test setting an invalid line-up. """
-        assert not palpite.LineUp([self.goalkeepers[12]]).is_valid(self.schemes)
+        assert not palpite.LineUp([self.goalkeepers[0]]).is_valid(self.schemes)
 
     def test_invalid_line_up2(self):
         """ Test setting an invalid line-up. """
@@ -298,6 +303,3 @@ class TestLineUp:
         line_up = palpite.LineUp(self.line_up_list)
         line_up.captain = line_up.players[0]
         assert line_up.predicted_points > 0
-
-    # TODO: Make more tests on points and predicted points. Those properties are
-    #  fundamental and I cannot risk them being wrong.
