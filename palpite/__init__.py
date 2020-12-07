@@ -1,4 +1,6 @@
 """ Cartola FC tips. """
+# TODO: Discards games outside the rounds.
+
 
 import os
 from typing import Sequence, Optional, List, Dict
@@ -119,7 +121,7 @@ class Player:
     @property
     def photo(self) -> str:
         """ Player photo. """
-        return self._series["foto"]
+        return self._series["foto"].replace("_FORMATO", "_140x140")
 
     @property
     def position(self) -> int:
@@ -424,3 +426,23 @@ class LineUp:
     def copy(self):
         """ Copy to a new instance. """
         return LineUp(self.players)
+
+    @property
+    def dataframe(self):
+        """ Export to a pandas DataFrame instance. """
+        data = pd.concat(
+            [
+                pd.DataFrame(
+                    {
+                        "Name": player.name,
+                        "Photo": player.photo,
+                        "Position": player.position,
+                        "Predicted Points": player.predicted_points,
+                    },
+                    index=[0],
+                )
+                for player in self
+            ],
+            ignore_index=True,
+        )
+        return data.sort_values("Position", ignore_index=True)

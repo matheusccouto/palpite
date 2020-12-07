@@ -1,14 +1,14 @@
 """ Unit-tests for palpite.draft """
 
-import time
 import os
+import time
 
 import pandas as pd
 import pytest
 
 import palpite
-import palpite.draft
 import palpite.data
+import palpite.draft
 
 THIS_FOLDER = os.path.dirname(__file__)
 
@@ -46,7 +46,9 @@ class TestRandomLineUp:
 
     def test_affordable(self):
         """ Make sure all line ups generated are below max price."""
-        prices = [palpite.draft.random_line_up(players, schemes, 70).price for _ in range(100)]
+        prices = [
+            palpite.draft.random_line_up(players, schemes, 70).price for _ in range(100)
+        ]
         assert max(prices) <= 70
 
     def test_perfomance(self):

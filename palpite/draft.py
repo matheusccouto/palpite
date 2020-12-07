@@ -1,7 +1,7 @@
 """ Athletes draft. """
 
 import random
-from typing import Sequence, Collection
+from typing import Sequence
 
 import numpy as np
 
@@ -40,15 +40,18 @@ def random_line_up(
     remaining_money = max_price
     for pos in positions:
 
+        # Filter affordable players.
         affordable_players = [
             player
             for player in players_dict[pos]
             if player.price <= remaining_money and player not in line_up
         ]
 
+        # If no affordable players, restart function.
         if len(affordable_players) == 0:
             return random_line_up(players=players, schemes=schemes, max_price=max_price)
 
+        # Randomly choose a player and add to the line up.
         random_choice = random.choice(affordable_players)
         line_up.add(random_choice)
 
@@ -207,13 +210,7 @@ def draft(
                 )
 
             new_pop.append(offspring)
-
         pop = new_pop
 
-        # FIXME
-        fitness = sorted(pop, key=lambda x: x.predicted_points, reverse=True)[
-            0
-        ].predicted_points
-        print(f"Generation {i + 1} Fitness {fitness}")
-
+    # Return the line up with the most predicted points.
     return sorted(pop, key=lambda x: x.predicted_points, reverse=True)[0]

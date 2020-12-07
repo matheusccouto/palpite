@@ -70,6 +70,9 @@ class TheOddsAPI:
     @staticmethod
     def clean_betting_lines(data: pd.DataFrame) -> pd.DataFrame:
         """ Clean betting lines dataframe. """
+        # Remove entries with no odds.
+        data = data[data["sites_count"] > 0]
+
         data["date"] = [time_stamp.date() for time_stamp in data["commence_time"]]
 
         # Order is kind of random, so we cannot trust that the provider

@@ -9,6 +9,24 @@ import palpite.data
 THIS_FOLDER = os.path.dirname(__file__)
 
 
+class TestTheOddsAPI:
+    """ Test TheOddsAPI class. """
+
+    def test_load_from_cache(self):
+        """ Test loading data from cache. """
+        # Load using API
+        odds_api = palpite.data.TheOddsAPI("1902")  # Fake key.
+        loaded = odds_api.betting_lines()
+
+        # Load directly from cache.
+        cache = pd.read_json(
+            os.path.join(THIS_FOLDER, "cache", "betting_lines.json")
+        )
+        cache = odds_api.clean_betting_lines(cache)
+
+        pd.testing.assert_frame_equal(loaded, cache)
+
+
 class TestClubsAndOddsMerge:
     """ Test functions related to merging odds to the clubs dataframe. """
 
