@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from palpite import THIS_FOLDER
+THIS_FOLDER = os.path.dirname(__file__)
 
 
 def request_to_df(url: str, key: Optional[str] = None, **kwargs) -> pd.DataFrame:

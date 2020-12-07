@@ -125,7 +125,7 @@ class TestAthlete:
     def test_not_eq(self):
         """ Test unequivalency. """
         player_1 = palpite.Player(38162, self.players, self.clubs)
-        player_2 = palpite.Player(38163, self.players, self.clubs)
+        player_2 = palpite.Player(38913, self.players, self.clubs)
         assert not player_1 == player_2
 
     def test_predicted_points_null(self):

@@ -21,6 +21,8 @@ class Club:
     def __init__(self, club_id: int, clubs: pd.DataFrame):
         self.id = club_id
         self.clubs = clubs
+        # Transform in dict to improve performance.
+        self._series = self.clubs.loc[self.id].to_dict()
 
     def __eq__(self, other: "Club") -> bool:
         return self.id == other.id
@@ -34,32 +36,32 @@ class Club:
     @property
     def name(self) -> str:
         """ Club name. """
-        return self.clubs.loc[self.id]["nome"]
+        return self._series["nome"]
 
     @property
     def abbreviation(self) -> str:
         """ Club abbreviation. """
-        return self.clubs.loc[self.id]["abreviacao"]
+        return self._series["abreviacao"]
 
     @property
     def logo(self) -> str:
         """ Club logo. """
-        return self.clubs.loc[self.id]["escudos"]["60x60"]
+        return self._series["escudos"]["60x60"]
 
     @property
     def win_odds(self) -> float:
         """ Odds of winning in the next match. """
-        return self.clubs.loc[self.id]["win_odds"]
+        return self._series["win_odds"]
 
     @property
     def draw_odds(self) -> float:
         """ Odds of drawing in the next match. """
-        return self.clubs.loc[self.id]["draw_odds"]
+        return self._series["draw_odds"]
 
     @property
     def lose_odds(self) -> float:
         """ Odds of losing in the next match. """
-        return self.clubs.loc[self.id]["lose_odds"]
+        return self._series["lose_odds"]
 
 
 class Player:
@@ -91,6 +93,15 @@ class Player:
         self.players = players
         self.clubs = clubs
 
+        # Transform in dict to improve performance.
+        self._series = players.loc[self.id].to_dict()
+
+        # Get player club.
+        self.club = Club(club_id=self._series["clube_id"], clubs=self.clubs)
+
+        self.predicted_points = 0
+        self.update_predicted_points()
+
     def __eq__(self, other: "Player") -> bool:
         return self.id == other.id
 
@@ -103,57 +114,52 @@ class Player:
     @property
     def name(self) -> str:
         """ Player name. """
-        return self.players.loc[self.id]["apelido"]
-
-    @property
-    def club(self) -> Club:
-        """ Player club. """
-        return Club(club_id=self.players.loc[self.id]["clube_id"], clubs=self.clubs,)
+        return self._series["apelido"]
 
     @property
     def photo(self) -> str:
         """ Player photo. """
-        return self.players.loc[self.id]["foto"]
+        return self._series["foto"]
 
     @property
     def position(self) -> int:
         """ Player position. """
-        return self.players.loc[self.id]["posicao_id"]
+        return self._series["posicao_id"]
 
     @property
     def status(self) -> int:
         """ Player status. """
-        return self.players.loc[self.id]["status_id"]
+        return self._series["status_id"]
 
     @property
     def matches(self) -> int:
         """ Player amount of played matches. """
-        return self.players.loc[self.id]["jogos_num"]
+        return self._series["jogos_num"]
 
     @property
     def points(self) -> float:
         """ Player points on club's last match. """
-        return self.players.loc[self.id]["pontos_num"]
+        return self._series["pontos_num"]
 
     @property
     def mean(self) -> float:
         """ Player mean points considering matches he has played. """
-        return self.players.loc[self.id]["media_num"]
+        return self._series["media_num"]
 
     @property
     def price(self) -> float:
         """ Player price. """
-        return self.players.loc[self.id]["preco_num"]
+        return self._series["preco_num"]
 
     @property
     def variation(self) -> float:
         """ Player price variation. """
-        return self.players.loc[self.id]["variacao_num"]
+        return self._series["variacao_num"]
 
     @property
     def scouts(self) -> Dict[str, int]:
         """ Player scouts. """
-        return self.players.loc[self.id]["scout"]
+        return self._series["scout"]
 
     @property
     def win_odds(self) -> float:
@@ -170,9 +176,8 @@ class Player:
         """ Get odds of his club losing in the next match. """
         return self.club.lose_odds
 
-    @property
-    def predicted_points(self) -> float:
-        """ Get predicted points using a machine learning model. """
+    def update_predicted_points(self) -> float:
+        """ Estimate predicted points using a machine learning model. """
         status = self.status_map[self.status]
         # If the player is suspended, injured or null,
         # it is expected to score no points at all.
@@ -183,12 +188,13 @@ class Player:
         if any(
             [pd.isna(self.win_odds), pd.isna(self.lose_odds), pd.isna(self.draw_odds)]
         ):
-            raise ValueError(
-                f"Can't make predictions for {self} "
-                f"because {self.club} does not have available odds."
-            )
+            return 0.0
+            # raise ValueError(
+            #     f"Can't make predictions for {self} "
+            #     f"because {self.club} does not have available odds."
+            # )
 
-        return MODEL.predict(
+        self.predicted_points = MODEL.predict(
             [
                 [
                     self.position_map[self.position],
@@ -203,6 +209,11 @@ class Player:
                 ]
             ]
         )[0][0]
+
+    @property
+    def is_predictable(self):
+        """ Check if it is possible to make the predictions. """
+        return pd.notna(self.win_odds)
 
 
 def create_all_players(players: pd.DataFrame, clubs: pd.DataFrame) -> List[Player]:
@@ -288,13 +299,41 @@ class LineUp:
     # 6 - Coach
 
     def __init__(self, players: Sequence[Player]):
-        self.players = players
+        self.players = list(players)
         self._captain: Optional[Player] = None
 
     def __eq__(self, other: "LineUp") -> bool:
         these_players = sorted(self.players, key=lambda x: x.id)
         other_players = sorted(other.players, key=lambda x: x.id)
         return these_players == other_players
+
+    def __contains__(self, item: Player) -> bool:
+        return item in self.players
+
+    def __getitem__(self, key: int) -> Player:
+        return self.players[key]
+
+    def __setitem__(self, key: int, value: Player) -> None:
+        self.players[key] = value
+
+    def __len__(self) -> int:
+        return len(self.players)
+
+    def __iter__(self) -> Player:
+        yield from self.players
+
+    def __str__(self) -> str:
+        players_list = [
+            str(player) for player in sorted(self.players, key=lambda x: x.position)
+        ]
+        return f"LineUp{players_list}"
+
+    def __repr__(self) -> str:
+        return f"<{self.__str__()}>"
+
+    def add(self, player: Player) -> None:
+        """ Add player to the line up. """
+        self.players.append(player)
 
     def is_valid(self, schemes: Sequence[Scheme]):
         """ Checks if the line-up is valid. """
@@ -356,6 +395,11 @@ class LineUp:
         )
 
     @property
+    def price(self) -> float:
+        """ Get line up price. """
+        return sum([player.price for player in self.players])
+
+    @property
     def points(self) -> int:
         """ Get line up points. """
         return sum(
@@ -376,3 +420,7 @@ class LineUp:
                 for player in self.players
             ]
         )
+
+    def copy(self):
+        """ Copy to a new instance. """
+        return LineUp(self.players)
