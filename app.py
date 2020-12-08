@@ -89,7 +89,7 @@ st.title("")
 st.header("Informações Gerais")
 st.text(f"Esquema Tático\t\t{line_up.scheme}")
 st.text(f"Pontuação Esperada\t{line_up.predicted_points:.1f} pontos")
-st.text(f"Custo Totoal\t\t{line_up.price:.1f} cartoletas")
+st.text(f"Custo Total\t\t{line_up.price:.1f} cartoletas")
 
 # About the app
 with open(os.path.join(THIS_FOLDER, "SOBRE.md"), encoding="utf-8") as file:
