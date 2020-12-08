@@ -6,7 +6,6 @@ import pandas as pd
 import streamlit as st
 
 import helper
-import keys
 import palpiteiro.data
 import palpiteiro.draft
 
@@ -25,8 +24,9 @@ st.sidebar.title("Configurações")
 money = st.sidebar.number_input("Cartoletas", min_value=0.0, value=100.0, format="%.1f")
 
 # Get clubs.
+key = os.environ.get("THE_ODDS_API")
 clubs = palpiteiro.data.get_clubs_with_odds(
-    key=keys.THE_ODDS_API, cache_folder=os.path.join(THIS_FOLDER, "cache")
+    key=key, cache_folder=os.path.join(THIS_FOLDER, "cache")
 )
 
 # Initialize Cartola FC API.
@@ -38,7 +38,6 @@ players = palpiteiro.create_all_players(cartola_fc_api.players(), clubs)
 players = [player for player in players if player.status in [2, 7]]
 # Keep only players from teams that have odds available.
 players = [player for player in players if pd.notna(player.club.win_odds)]
-# Keep only players from teams that are not banned.
 
 # Schemes.
 schemes = palpiteiro.create_schemes(cartola_fc_api.schemes())
