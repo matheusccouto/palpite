@@ -1,10 +1,10 @@
-""" palpite.data unit-tests. """
+""" palpiteiro.data unit-tests. """
 
 import os
 
 import pandas as pd
 
-import palpite.data
+import palpiteiro.data
 
 THIS_FOLDER = os.path.dirname(__file__)
 
@@ -15,7 +15,7 @@ class TestTheOddsAPI:
     def test_load_from_cache(self):
         """ Test loading data from cache. """
         # Load using API
-        odds_api = palpite.data.TheOddsAPI("1902")  # Fake key.
+        odds_api = palpiteiro.data.TheOddsAPI("1902")  # Fake key.
         loaded = odds_api.betting_lines()
 
         # Load directly from cache.
@@ -33,7 +33,7 @@ class TestClubsAndOddsMerge:
     @classmethod
     def setup_class(cls):
         """ Setup class. """
-        cartola_api = palpite.data.CartolaFCAPI()
+        cartola_api = palpiteiro.data.CartolaFCAPI()
         cls.clubs = cartola_api.clubs()
 
         cls.odds = pd.read_csv(
@@ -42,7 +42,7 @@ class TestClubsAndOddsMerge:
 
     def test_get_club_id(self):
         """ Test get_club_id function. """
-        club_id = palpite.data.get_club_id(
+        club_id = palpiteiro.data.get_club_id(
             [
                 "Cuiaba",
                 "sao paulo",
@@ -65,7 +65,7 @@ class TestClubsAndOddsMerge:
 
     def test_merge_clubs_and_odds_exists(self):
         """ Test function merge_clubs_and_odds on teams that have odds. """
-        merged = palpite.data.merge_clubs_and_odds(clubs=self.clubs, odds=self.odds)
+        merged = palpiteiro.data.merge_clubs_and_odds(clubs=self.clubs, odds=self.odds)
         assert merged.loc[266]["nome"] == "Fluminense"
         assert round(merged.loc[266]["win_odds"], 2) == 3.26
         assert round(merged.loc[266]["draw_odds"], 2) == 2.10
@@ -73,7 +73,7 @@ class TestClubsAndOddsMerge:
 
     def test_merge_clubs_and_odds_nan(self):
         """ Test function merge_clubs_and_odds on teams that do not have odds. """
-        merged = palpite.data.merge_clubs_and_odds(clubs=self.clubs, odds=self.odds)
+        merged = palpiteiro.data.merge_clubs_and_odds(clubs=self.clubs, odds=self.odds)
         assert merged.loc[364]["nome"] == "Remo"
         assert pd.isna(merged.loc[364]["win_odds"])
         assert pd.isna(merged.loc[364]["draw_odds"])
@@ -83,7 +83,7 @@ class TestClubsAndOddsMerge:
         """ Test function get_clubs """
         # This is a fake key, but there is no problem
         # because it will use the cache folder.
-        clubs = palpite.data.get_clubs_with_odds(
+        clubs = palpiteiro.data.get_clubs_with_odds(
             key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
         )
         assert clubs.loc[266]["nome"] == "Fluminense"

@@ -1,5 +1,6 @@
 """ Data requesting and wrangling. """
 
+import datetime
 import json
 import os
 from typing import Optional, Sequence, List
@@ -119,7 +120,8 @@ class TheOddsAPI:
     def betting_lines(self) -> pd.DataFrame:
         """ Get betting lines data frame. """
         # First check if the request wasn't already made to avoid excessive requests.
-        cache_file_name = os.path.join(self.cache_folder, "betting_lines.json")
+        date = datetime.datetime.now().date()
+        cache_file_name = os.path.join(self.cache_folder, f"{date}.json")
         if not os.path.exists(cache_file_name):
 
             # Create cache folder if doesn't exist yet.

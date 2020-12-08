@@ -1,5 +1,4 @@
 """ Cartola FC tips. """
-# TODO: Discards games outside the rounds.
 
 
 import os
@@ -48,7 +47,7 @@ class Club:
     @property
     def logo(self) -> str:
         """ Club logo. """
-        return self._series["escudos"]["60x60"]
+        return self._series["escudos"]["30x30"]
 
     @property
     def win_odds(self) -> float:
@@ -77,6 +76,15 @@ class Player:
         4: 4,  # Midfielder
         5: 5,  # Forward
         6: 0,  # Coach
+    }
+
+    position_abbreviation_map = {
+        1: "GOL",
+        2: "LAT",
+        3: "ZAG",
+        4: "MEI",
+        5: "ATA",
+        6: "TEC",
     }
 
     # Status map
@@ -127,6 +135,11 @@ class Player:
     def position(self) -> int:
         """ Player position. """
         return self._series["posicao_id"]
+
+    @property
+    def position_abbreviation(self) -> str:
+        """ Player position name abbreviation"""
+        return self.position_abbreviation_map[self.position]
 
     @property
     def status(self) -> int:
@@ -434,9 +447,14 @@ class LineUp:
             [
                 pd.DataFrame(
                     {
-                        "Name": player.name,
+                        "Club Photo": player.club.logo,
+                        "Club": player.club.name,
                         "Photo": player.photo,
+                        "Name": f"{player.name} (C)"
+                        if player == self.captain
+                        else player.name,
                         "Position": player.position,
+                        "Position Name": player.position_abbreviation,
                         "Predicted Points": player.predicted_points,
                     },
                     index=[0],

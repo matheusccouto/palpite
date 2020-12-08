@@ -5,10 +5,10 @@ from typing import Sequence
 
 import numpy as np
 
-import palpite
+import palpiteiro
 
 
-def assign_captain(line_up: palpite.LineUp) -> palpite.LineUp:
+def assign_captain(line_up: palpiteiro.LineUp) -> palpiteiro.LineUp:
     """ Assign the player with the most expected points as captain. """
     idx = np.argmax([player.predicted_points for player in line_up])
     line_up.captain = line_up[idx]
@@ -16,10 +16,10 @@ def assign_captain(line_up: palpite.LineUp) -> palpite.LineUp:
 
 
 def random_line_up(
-    players: Sequence[palpite.Player],
-    schemes: Sequence[palpite.Scheme],
+    players: Sequence[palpiteiro.Player],
+    schemes: Sequence[palpiteiro.Scheme],
     max_price: float,
-) -> palpite.LineUp:
+) -> palpiteiro.LineUp:
     """ Create a random valid line-up. """
     # Select a random scheme.
     scheme = random.choice(schemes)
@@ -31,7 +31,7 @@ def random_line_up(
     }
 
     # Create an empty line_up
-    line_up = palpite.LineUp([])
+    line_up = palpiteiro.LineUp([])
 
     # Iterate on positions to be draft on a random order.
     positions = [pos for pos, amount in scheme.dict.items() for _ in range(amount)]
@@ -62,11 +62,11 @@ def random_line_up(
 
 
 def mutate_line_up(
-    line_up: palpite.LineUp,
-    players: Sequence[palpite.Player],
-    schemes: Sequence[palpite.Scheme],
+    line_up: palpiteiro.LineUp,
+    players: Sequence[palpiteiro.Player],
+    schemes: Sequence[palpiteiro.Scheme],
     max_price: float,
-) -> palpite.LineUp:
+) -> palpiteiro.LineUp:
     """ Change a single random player in the line up. """
     # Avoid inplace transformations.
     line_up = line_up.copy()
@@ -104,8 +104,8 @@ def mutate_line_up(
 
 
 def crossover_line_up(
-    line_up1: palpite.LineUp, line_up2: palpite.LineUp, max_price: float,
-) -> palpite.LineUp:
+    line_up1: palpiteiro.LineUp, line_up2: palpiteiro.LineUp, max_price: float,
+) -> palpiteiro.LineUp:
     """
     Cross-over two line_ups.
 
@@ -151,13 +151,13 @@ def crossover_line_up(
 def draft(
     individuals: int,
     generations: int,
-    players: Sequence[palpite.Player],
-    schemes: Sequence[palpite.Scheme],
+    players: Sequence[palpiteiro.Player],
+    schemes: Sequence[palpiteiro.Scheme],
     max_price: float,
     tournament_size: int,
     elite: int = 1,
     early_stopping: bool = True,
-) -> palpite.LineUp:
+) -> palpiteiro.LineUp:
     """ Draft best team possible using genetic algorithm. """
     # Create initial population.
     pop = [random_line_up(players, schemes, max_price) for _ in range(individuals)]

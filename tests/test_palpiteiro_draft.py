@@ -1,4 +1,4 @@
-""" Unit-tests for palpite.draft """
+""" Unit-tests for palpiteiro.draft """
 
 import os
 import time
@@ -6,26 +6,26 @@ import time
 import pandas as pd
 import pytest
 
-import palpite
-import palpite.data
-import palpite.draft
+import palpiteiro
+import palpiteiro.data
+import palpiteiro.draft
 
 THIS_FOLDER = os.path.dirname(__file__)
 
 
 # Get clubs.
-clubs = palpite.data.get_clubs_with_odds("1902", os.path.join(THIS_FOLDER, "cache"))
+clubs = palpiteiro.data.get_clubs_with_odds("1902", os.path.join(THIS_FOLDER, "cache"))
 
 # Initialize Cartola FC API.
-cartola_fc_api = palpite.data.CartolaFCAPI()
+cartola_fc_api = palpiteiro.data.CartolaFCAPI()
 
 # Players.
-players = palpite.create_all_players(cartola_fc_api.players(), clubs)
+players = palpiteiro.create_all_players(cartola_fc_api.players(), clubs)
 players = [player for player in players if player.status in [2, 7]]
 players = [player for player in players if pd.notna(player.club.win_odds)]
 
 # Schemes.
-schemes = palpite.create_schemes(cartola_fc_api.schemes())
+schemes = palpiteiro.create_schemes(cartola_fc_api.schemes())
 
 
 class TestRandomLineUp:
@@ -33,7 +33,7 @@ class TestRandomLineUp:
 
     def test_is_valid(self):
         """ Test if generated line up is valid. """
-        line_up = palpite.draft.random_line_up(players, schemes, 1e6)
+        line_up = palpiteiro.draft.random_line_up(players, schemes, 1e6)
         assert line_up.is_valid(schemes)
 
     def test_is_expensive(self):
@@ -42,12 +42,12 @@ class TestRandomLineUp:
         available money.
         """
         with pytest.raises(RecursionError):
-            palpite.draft.random_line_up(players, schemes, 0)
+            palpiteiro.draft.random_line_up(players, schemes, 0)
 
     def test_affordable(self):
         """ Make sure all line ups generated are below max price."""
         prices = [
-            palpite.draft.random_line_up(players, schemes, 70).price for _ in range(100)
+            palpiteiro.draft.random_line_up(players, schemes, 70).price for _ in range(100)
         ]
         assert max(prices) <= 70
 
@@ -55,7 +55,7 @@ class TestRandomLineUp:
         """ Test if it runs functions 100 times in less than a second. """
         start = time.time()
         for _ in range(100):
-            palpite.draft.random_line_up(players, schemes, 1e6)
+            palpiteiro.draft.random_line_up(players, schemes, 1e6)
         end = time.time()
         assert end - start < 1  # seconds
 
@@ -66,13 +66,13 @@ class TestMutateLineUp:
     @classmethod
     def setup_class(cls):
         """ Setup class. """
-        cls.line_up = palpite.draft.random_line_up(
+        cls.line_up = palpiteiro.draft.random_line_up(
             players=players, schemes=schemes, max_price=1e6
         )
 
     def test_not_equal(self):
         """ Check that the mutated line up is not equal. """
-        new_line_up = palpite.draft.mutate_line_up(
+        new_line_up = palpiteiro.draft.mutate_line_up(
             line_up=self.line_up, players=players, schemes=schemes, max_price=1e6,
         )
         assert new_line_up != self.line_up
@@ -81,7 +81,7 @@ class TestMutateLineUp:
         """ Test if it runs functions 100 times in less than a second. """
         start = time.time()
         for _ in range(100):
-            palpite.draft.mutate_line_up(self.line_up, players, schemes, 1e6)
+            palpiteiro.draft.mutate_line_up(self.line_up, players, schemes, 1e6)
         end = time.time()
         assert end - start < 1  # seconds
 
@@ -92,10 +92,10 @@ class TestCrossoverLineUp:
     @classmethod
     def setup_class(cls):
         """ Setup class. """
-        cls.line_up1 = palpite.draft.random_line_up(
+        cls.line_up1 = palpiteiro.draft.random_line_up(
             players=players, schemes=schemes, max_price=1e6
         )
-        cls.line_up2 = palpite.draft.random_line_up(
+        cls.line_up2 = palpiteiro.draft.random_line_up(
             players=players, schemes=schemes, max_price=1e6
         )
 
@@ -103,7 +103,7 @@ class TestCrossoverLineUp:
         """ Test if it runs functions 100 times in less than a second. """
         start = time.time()
         for _ in range(100):
-            palpite.draft.crossover_line_up(
+            palpiteiro.draft.crossover_line_up(
                 line_up1=self.line_up1, line_up2=self.line_up2, max_price=1e6
             )
         end = time.time()
@@ -115,7 +115,7 @@ class TestDraft:
 
     def test_duplicates(self):
         """ Make sure there aren't duplicates on the final team. """
-        best_line_up = palpite.draft.draft(
+        best_line_up = palpiteiro.draft.draft(
             individuals=50,
             generations=10,
             players=players,
@@ -128,7 +128,7 @@ class TestDraft:
 
     def test_draft(self):
         """ Test main functionality. """
-        best_line_up = palpite.draft.draft(
+        best_line_up = palpiteiro.draft.draft(
             individuals=50,
             generations=10,
             players=players,

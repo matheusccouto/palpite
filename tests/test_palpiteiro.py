@@ -1,9 +1,9 @@
-""" Unit-tests for palpite package. """
+""" Unit-tests for palpiteiro package. """
 
 import os
 
-import palpite
-import palpite.data
+import palpiteiro
+import palpiteiro.data
 
 THIS_FOLDER = os.path.dirname(__file__)
 
@@ -14,10 +14,10 @@ class TestClub:
     @classmethod
     def setup_class(cls):
         """ Setup class. """
-        cls.clubs = palpite.data.get_clubs_with_odds(
+        cls.clubs = palpiteiro.data.get_clubs_with_odds(
             key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
         )  # Fake key. But doesn't matter.
-        cls.club = palpite.Club(266, clubs=cls.clubs)
+        cls.club = palpiteiro.Club(266, clubs=cls.clubs)
 
     def test_name(self):
         """ Test team name. """
@@ -45,11 +45,11 @@ class TestClub:
 
     def test_eq(self):
         """ Test equivalency. """
-        assert palpite.Club(266, self.clubs) == palpite.Club(266, self.clubs)
+        assert palpiteiro.Club(266, self.clubs) == palpiteiro.Club(266, self.clubs)
 
     def test_not_eq(self):
         """ Test unequivalency. """
-        assert not palpite.Club(266, self.clubs) == palpite.Club(267, self.clubs)
+        assert not palpiteiro.Club(266, self.clubs) == palpiteiro.Club(267, self.clubs)
 
 
 class TestAthlete:
@@ -59,16 +59,16 @@ class TestAthlete:
     def setup_class(cls):
         """ Setup class. """
         # Get clubs dataset.
-        cls.clubs = palpite.data.get_clubs_with_odds(
+        cls.clubs = palpiteiro.data.get_clubs_with_odds(
             key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
         )  # Fake key. But doesn't matter.
 
         # Get players.
-        cartola_api = palpite.data.CartolaFCAPI()
+        cartola_api = palpiteiro.data.CartolaFCAPI()
         cls.players = cartola_api.players()
 
         # Create a player.
-        cls.player = palpite.Player(38162, players=cls.players, clubs=cls.clubs)
+        cls.player = palpiteiro.Player(38162, players=cls.players, clubs=cls.clubs)
 
     def test_name(self):
         """ Test player name. """
@@ -118,14 +118,14 @@ class TestAthlete:
 
     def test_eq(self):
         """ Test equivalency. """
-        player_1 = palpite.Player(38162, self.players, self.clubs)
-        player_2 = palpite.Player(38162, self.players, self.clubs)
+        player_1 = palpiteiro.Player(38162, self.players, self.clubs)
+        player_2 = palpiteiro.Player(38162, self.players, self.clubs)
         assert player_1 == player_2
 
     def test_not_eq(self):
         """ Test unequivalency. """
-        player_1 = palpite.Player(38162, self.players, self.clubs)
-        player_2 = palpite.Player(38913, self.players, self.clubs)
+        player_1 = palpiteiro.Player(38162, self.players, self.clubs)
+        player_2 = palpiteiro.Player(38913, self.players, self.clubs)
         assert not player_1 == player_2
 
     def test_predicted_points_null(self):
@@ -134,7 +134,7 @@ class TestAthlete:
 
     def test_predicted_points(self):
         """ Test if the machine learning makes prediction. """
-        player = palpite.Player(38913, self.players, self.clubs)
+        player = palpiteiro.Player(38913, self.players, self.clubs)
         assert player.predicted_points > 0
 
 
@@ -144,7 +144,7 @@ class TestScheme:
     @classmethod
     def setup_class(cls):
         """ Setup class. """
-        cls.scheme = palpite.Scheme(
+        cls.scheme = palpiteiro.Scheme(
             goalkeepers=1,
             fullbacks=2,
             defenders=2,
@@ -180,9 +180,9 @@ class TestScheme:
     @staticmethod
     def test_create_schemes():
         """ Test create scheme function. """
-        cartola_api = palpite.data.CartolaFCAPI()
+        cartola_api = palpiteiro.data.CartolaFCAPI()
         raw_schemes = cartola_api.schemes()
-        schemes = palpite.create_schemes(raw_schemes)
+        schemes = palpiteiro.create_schemes(raw_schemes)
 
         expected_schemes = [
             "3-4-3",
@@ -205,19 +205,19 @@ class TestLineUp:
         """ Setup class. """
 
         # Get clubs
-        clubs = palpite.data.get_clubs_with_odds(
+        clubs = palpiteiro.data.get_clubs_with_odds(
             key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
         )  # Fake key.
 
         # Get players
-        cartola_api = palpite.data.CartolaFCAPI()
+        cartola_api = palpiteiro.data.CartolaFCAPI()
         players = cartola_api.players()
 
         # Get schemes
-        cls.schemes = palpite.create_schemes(cartola_api.schemes())
+        cls.schemes = palpiteiro.create_schemes(cartola_api.schemes())
 
         # Get all players.
-        players = palpite.create_all_players(players, clubs)
+        players = palpiteiro.create_all_players(players, clubs)
         # Filter team
         players = [player for player in players if player.club.id == 266]
 
@@ -245,28 +245,28 @@ class TestLineUp:
 
     def test_invalid_line_up1(self):
         """ Test setting an invalid line-up. """
-        assert not palpite.LineUp([self.goalkeepers[0]]).is_valid(self.schemes)
+        assert not palpiteiro.LineUp([self.goalkeepers[0]]).is_valid(self.schemes)
 
     def test_invalid_line_up2(self):
         """ Test setting an invalid line-up. """
         invalid_line_up = self.line_up_list.copy()
         invalid_line_up[0] = self.fullbacks[-1]
-        assert not palpite.LineUp(invalid_line_up).is_valid(self.schemes)
+        assert not palpiteiro.LineUp(invalid_line_up).is_valid(self.schemes)
 
     def test_invalid_line_up3(self):
         """ Test setting an invalid line-up. """
-        assert not palpite.LineUp(self.line_up_list + self.coaches[-1:]).is_valid(
+        assert not palpiteiro.LineUp(self.line_up_list + self.coaches[-1:]).is_valid(
             self.schemes
         )
 
     def test_valid_line_up(self):
         """ Test setting a valid line-up. """
-        assert palpite.LineUp(self.line_up_list).is_valid(self.schemes)
+        assert palpiteiro.LineUp(self.line_up_list).is_valid(self.schemes)
 
     def test_get_scheme(self):
         """ Test line_up scheme. """
-        my_scheme = palpite.LineUp(self.line_up_list).scheme
-        ref_scheme = palpite.Scheme(
+        my_scheme = palpiteiro.LineUp(self.line_up_list).scheme
+        ref_scheme = palpiteiro.Scheme(
             goalkeepers=1,
             fullbacks=2,
             defenders=2,
@@ -278,13 +278,13 @@ class TestLineUp:
 
     def test_captain(self):
         """ Test set captain. """
-        line_up = palpite.LineUp(self.line_up_list)
+        line_up = palpiteiro.LineUp(self.line_up_list)
         line_up.captain = line_up.players[0]
         assert line_up.captain is self.line_up_list[0]
 
     def test_positions(self):
         """ Test each position. """
-        line_up = palpite.LineUp(self.line_up_list)
+        line_up = palpiteiro.LineUp(self.line_up_list)
         assert line_up.goalkeepers == self.goalkeepers[:1]
         assert line_up.fullbacks == self.fullbacks[:2]
         assert line_up.defenders == self.defenders[:2]
@@ -294,12 +294,12 @@ class TestLineUp:
 
     def test_points(self):
         """ Test get current points. """
-        line_up = palpite.LineUp(self.line_up_list)
+        line_up = palpiteiro.LineUp(self.line_up_list)
         line_up.captain = line_up.players[0]
         assert line_up.points > 0
 
     def test_predicted_points(self):
         """ Test get current points. """
-        line_up = palpite.LineUp(self.line_up_list)
+        line_up = palpiteiro.LineUp(self.line_up_list)
         line_up.captain = line_up.players[0]
         assert line_up.predicted_points > 0

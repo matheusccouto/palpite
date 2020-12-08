@@ -1,4 +1,4 @@
-""" Palpite web-app. """
+""" Palpiteiro web-app. """
 
 import os
 
@@ -7,53 +7,91 @@ import streamlit as st
 
 import helper
 import keys
-import palpite
-import palpite.data
-import palpite.draft
+import palpiteiro.data
+import palpiteiro.draft
 
-APP_NAME = "Palpite Cartola FC"
+# Constants.
+APP_NAME = "Palpiteiro"
+SUBTITLE = "Recomendação de escalações para o Cartola FC"
 THIS_FOLDER = os.path.dirname(__file__)
 
 # Page title and configs.
 st.set_page_config(page_title=APP_NAME)
 st.title(APP_NAME)
+st.text(SUBTITLE)
 
 # Main inputs.
-money = st.number_input("Cartoletas", min_value=0.0, value=100.0)
-
-# TODO Add my team and exclude rivals option.
+st.sidebar.title("Configurações")
+money = st.sidebar.number_input("Cartoletas", min_value=0.0, value=100.0, format="%.1f")
 
 # Get clubs.
-clubs = palpite.data.get_clubs_with_odds(
+clubs = palpiteiro.data.get_clubs_with_odds(
     key=keys.THE_ODDS_API, cache_folder=os.path.join(THIS_FOLDER, "cache")
 )
 
 # Initialize Cartola FC API.
-cartola_fc_api = palpite.data.CartolaFCAPI()
+cartola_fc_api = palpiteiro.data.CartolaFCAPI()
 
 # Players.
-players = palpite.create_all_players(cartola_fc_api.players(), clubs)
+players = palpiteiro.create_all_players(cartola_fc_api.players(), clubs)
 # Keep only players that may play.
 players = [player for player in players if player.status in [2, 7]]
 # Keep only players from teams that have odds available.
 players = [player for player in players if pd.notna(player.club.win_odds)]
+# Keep only players from teams that are not banned.
 
 # Schemes.
-schemes = palpite.create_schemes(cartola_fc_api.schemes())
+schemes = palpiteiro.create_schemes(cartola_fc_api.schemes())
 
-line_up = palpite.draft.draft(
-    individuals=100,
-    generations=100,
-    players=players,
-    schemes=schemes,
-    max_price=money,
-    tournament_size=5,
+# Select teams.
+clubs_names = sorted(clubs.dropna(subset=["win_odds"])["nome"])
+selected_clubs = st.sidebar.multiselect(
+    "Times", options=clubs_names, default=clubs_names
 )
+players = [player for player in players if player.club.name in selected_clubs]
 
+# Select schemes.
+schemes = st.sidebar.multiselect("Esquemas Táticos", options=schemes, default=schemes)
+
+# Get line up.
+with st.spinner("Por favor aguarde enquanto o algoritmo escolhe os jogadores..."):
+    line_up = palpiteiro.draft.draft(
+        individuals=100,
+        generations=50,
+        players=players,
+        schemes=schemes,
+        max_price=money,
+        tournament_size=5,
+    )
+
+# Show line up.
+st.header("Aqui está a sua escalação")
+
+# Arrange data.
 line_up_table = line_up.dataframe
-line_up_table["Photo"] = line_up_table["Photo"].apply(helper.create_html_tag, height=60)
-line_up_table = line_up_table[["Photo", "Predicted Points"]]
+line_up_table["Player"] = line_up_table.apply(
+    lambda x: helper.create_html_tag(photo=x["Photo"], name=x["Name"], height=64),
+    axis=1,
+)
+line_up_table["Club"] = line_up_table.apply(
+    lambda x: helper.create_html_tag(photo=x["Club Photo"], name=x["Club"], height=32),
+    axis=1,
+)
+line_up_table = line_up_table[["Position Name", "Player", "Club"]]
 
-html_table = line_up_table.to_html(escape=False)
+# Transform into html and show on app.
+html_table = line_up_table.to_html(escape=False, header=False, index=False, border=0)
 html_table = helper.format_html_table(html_table)
 st.write(html_table, unsafe_allow_html=True)
+
+# General info.
+st.title("")
+st.header("Informações Gerais")
+st.text(f"Esquema Tático\t\t{line_up.scheme}")
+st.text(f"Pontuação Esperada\t{line_up.predicted_points:.1f} pontos")
+st.text(f"Custo Totoal\t\t{line_up.price:.1f} cartoletas")
+
+# About the app
+with open(os.path.join(THIS_FOLDER, "SOBRE.md"), encoding="utf-8") as file:
+    about = file.read()
+st.sidebar.markdown(about)

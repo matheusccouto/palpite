@@ -1,2 +1,2 @@
-# palpite
-Cartola FC tips.
+# palpiteiro
+Cartola FC reccomendation app.
