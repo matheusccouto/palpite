@@ -1,2 +1,2 @@
 # palpiteiro
-Cartola FC reccomendation app.
+Cartola FC recommendation app.
