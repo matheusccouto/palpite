@@ -19,9 +19,7 @@ class TestTheOddsAPI:
         loaded = odds_api.betting_lines()
 
         # Load directly from cache.
-        cache = pd.read_json(
-            os.path.join(THIS_FOLDER, "cache", "betting_lines.json")
-        )
+        cache = pd.read_json(os.path.join(THIS_FOLDER, "cache", "betting_lines.json"))
         cache = odds_api.clean_betting_lines(cache)
 
         pd.testing.assert_frame_equal(loaded, cache)

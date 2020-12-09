@@ -47,7 +47,8 @@ class TestRandomLineUp:
     def test_affordable(self):
         """ Make sure all line ups generated are below max price."""
         prices = [
-            palpiteiro.draft.random_line_up(players, schemes, 70).price for _ in range(100)
+            palpiteiro.draft.random_line_up(players, schemes, 70).price
+            for _ in range(100)
         ]
         assert max(prices) <= 70
 
