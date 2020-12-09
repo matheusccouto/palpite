@@ -94,3 +94,8 @@ st.text(f"Custo Total\t\t{line_up.price:.1f} cartoletas")
 with open(os.path.join(THIS_FOLDER, "SOBRE.md"), encoding="utf-8") as file:
     about = file.read()
 st.sidebar.markdown(about)
+
+if os.path.exists(os.path.join(THIS_FOLDER, "cache")):
+    st.text("Data was loaded from cached data.")
+else:
+    st.write("Data was requested by the API.")

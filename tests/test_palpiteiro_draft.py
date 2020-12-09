@@ -14,7 +14,11 @@ THIS_FOLDER = os.path.dirname(__file__)
 
 
 # Get clubs.
-clubs = palpiteiro.data.get_clubs_with_odds("1902", os.path.join(THIS_FOLDER, "cache"))
+clubs = palpiteiro.data.get_clubs_with_odds(
+    "1902",
+    cache_folder=os.path.join(THIS_FOLDER, "data"),
+    cache_file="betting_lines.json",
+)
 
 # Initialize Cartola FC API.
 cartola_fc_api = palpiteiro.data.CartolaFCAPI()

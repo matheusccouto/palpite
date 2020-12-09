@@ -64,9 +64,19 @@ class TheOddsAPI:
 
     host = r"https://api.the-odds-api.com/v3/"
 
-    def __init__(self, key: str, cache_folder: Optional[str] = None):
+    def __init__(
+        self,
+        key: str,
+        cache_folder: Optional[str] = None,
+        cache_file: Optional[str] = None,
+    ):
         self.key = key
         self.cache_folder = "cache" if cache_folder is None else cache_folder
+        self.cache_file = (
+            f"{datetime.datetime.now().date()}.json"
+            if cache_file is None
+            else cache_file
+        )
 
     @staticmethod
     def clean_betting_lines(data: pd.DataFrame) -> pd.DataFrame:
@@ -120,13 +130,13 @@ class TheOddsAPI:
     def betting_lines(self) -> pd.DataFrame:
         """ Get betting lines data frame. """
         # First check if the request wasn't already made to avoid excessive requests.
-        date = datetime.datetime.now().date()
-        cache_file_name = os.path.join(self.cache_folder, f"{date}.json")
+        cache_file_name = os.path.join(self.cache_folder, self.cache_file)
         if not os.path.exists(cache_file_name):
 
             # Create cache folder if doesn't exist yet.
             os.makedirs("cache", exist_ok=True)
 
+            print("Requesting from The Odds API")
             # Request.
             rqst = requests.get(
                 url=self.host + "odds",
@@ -142,6 +152,9 @@ class TheOddsAPI:
             # Save JSON to cache.
             with open(cache_file_name, "w") as file:
                 json.dump(rqst, file)
+
+        else:
+            print("Loading from cache")
 
         return self.clean_betting_lines(pd.read_json(cache_file_name))
 
@@ -205,10 +218,12 @@ def merge_clubs_and_odds(clubs: pd.DataFrame, odds: pd.DataFrame) -> pd.DataFram
     return pd.merge(clubs, odds, how="outer", left_index=True, right_index=True)
 
 
-def get_clubs_with_odds(key: str, cache_folder: Optional[str] = None) -> pd.DataFrame:
+def get_clubs_with_odds(
+    key: str, cache_folder: Optional[str] = None, cache_file: Optional[str] = None
+) -> pd.DataFrame:
     """ Get clubs data with odds included.. """
     # Get odds dataset.
-    odds_api = TheOddsAPI(key=key, cache_folder=cache_folder)
+    odds_api = TheOddsAPI(key=key, cache_folder=cache_folder, cache_file=cache_file)
     odds = odds_api.betting_lines()
 
     # Get clubs dataset.

@@ -2,6 +2,8 @@
 
 import os
 
+import pandas as pd
+
 import palpiteiro
 import palpiteiro.data
 
@@ -15,7 +17,9 @@ class TestClub:
     def setup_class(cls):
         """ Setup class. """
         cls.clubs = palpiteiro.data.get_clubs_with_odds(
-            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
+            "1902",
+            cache_folder=os.path.join(THIS_FOLDER, "data"),
+            cache_file="betting_lines.json",
         )  # Fake key. But doesn't matter.
         cls.club = palpiteiro.Club(266, clubs=cls.clubs)
 
@@ -29,7 +33,7 @@ class TestClub:
 
     def test_logo(self):
         """ Test team logos. """
-        assert self.club.logo == self.clubs.loc[266]["escudos"]["60x60"]
+        assert self.club.logo == self.clubs.loc[266]["escudos"]["30x30"]
 
     def test_win_odds(self):
         """ Test team winning odds. """
@@ -60,12 +64,15 @@ class TestAthlete:
         """ Setup class. """
         # Get clubs dataset.
         cls.clubs = palpiteiro.data.get_clubs_with_odds(
-            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
+            "1902",
+            cache_folder=os.path.join(THIS_FOLDER, "data"),
+            cache_file="betting_lines.json",
         )  # Fake key. But doesn't matter.
 
         # Get players.
-        cartola_api = palpiteiro.data.CartolaFCAPI()
-        cls.players = cartola_api.players()
+        cls.players = pd.read_csv(
+            os.path.join(THIS_FOLDER, "data", "players.csv"), index_col=0
+        )
 
         # Create a player.
         cls.player = palpiteiro.Player(38162, players=cls.players, clubs=cls.clubs)
@@ -134,7 +141,7 @@ class TestAthlete:
 
     def test_predicted_points(self):
         """ Test if the machine learning makes prediction. """
-        player = palpiteiro.Player(38913, self.players, self.clubs)
+        player = palpiteiro.Player(107173, self.players, self.clubs)
         assert player.predicted_points > 0
 
 
@@ -206,7 +213,9 @@ class TestLineUp:
 
         # Get clubs
         clubs = palpiteiro.data.get_clubs_with_odds(
-            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
+            "1902",
+            cache_folder=os.path.join(THIS_FOLDER, "data"),
+            cache_file="betting_lines.json",
         )  # Fake key.
 
         # Get players

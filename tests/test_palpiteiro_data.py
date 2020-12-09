@@ -15,11 +15,15 @@ class TestTheOddsAPI:
     def test_load_from_cache(self):
         """ Test loading data from cache. """
         # Load using API
-        odds_api = palpiteiro.data.TheOddsAPI("1902")  # Fake key.
+        odds_api = palpiteiro.data.TheOddsAPI(
+            "1902",
+            cache_folder=os.path.join(THIS_FOLDER, "data"),
+            cache_file="betting_lines.json",
+        )  # Fake key.
         loaded = odds_api.betting_lines()
 
         # Load directly from cache.
-        cache = pd.read_json(os.path.join(THIS_FOLDER, "cache", "betting_lines.json"))
+        cache = pd.read_json(os.path.join(THIS_FOLDER, "data", "betting_lines.json"))
         cache = odds_api.clean_betting_lines(cache)
 
         pd.testing.assert_frame_equal(loaded, cache)
@@ -82,12 +86,14 @@ class TestClubsAndOddsMerge:
         # This is a fake key, but there is no problem
         # because it will use the cache folder.
         clubs = palpiteiro.data.get_clubs_with_odds(
-            key="1902", cache_folder=os.path.join(THIS_FOLDER, "cache")
+            "1902",
+            cache_folder=os.path.join(THIS_FOLDER, "data"),
+            cache_file="betting_lines.json",
         )
         assert clubs.loc[266]["nome"] == "Fluminense"
-        assert round(clubs.loc[266]["win_odds"], 2) == 3.26
-        assert round(clubs.loc[266]["draw_odds"], 2) == 2.10
-        assert round(clubs.loc[266]["lose_odds"], 2) == 3.43
+        assert round(clubs.loc[266]["win_odds"], 2) == 4.34
+        assert round(clubs.loc[266]["draw_odds"], 2) == 1.98
+        assert round(clubs.loc[266]["lose_odds"], 2) == 3.12
         assert clubs.loc[364]["nome"] == "Remo"
         assert pd.isna(clubs.loc[364]["win_odds"])
         assert pd.isna(clubs.loc[364]["draw_odds"])

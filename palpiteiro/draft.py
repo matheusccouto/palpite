@@ -89,7 +89,13 @@ def mutate_line_up(
         ]
 
         if len(available_players) == 0:
-            raise ValueError("No available players.")
+            # If no available player. Apply recursion.
+            return mutate_line_up(
+                line_up=line_up,
+                players=players,
+                schemes=schemes,
+                max_price=max_price,
+            )
 
         new_player = random.choice(available_players)
 
