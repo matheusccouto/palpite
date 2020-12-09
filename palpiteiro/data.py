@@ -84,7 +84,8 @@ class TheOddsAPI:
         # Remove entries with no odds.
         data = data[data["sites_count"] > 0]
 
-        data["date"] = [time_stamp.date() for time_stamp in data["commence_time"]]
+        delta = datetime.timedelta(hours=3)  # From UTC to BRT
+        data["date"] = [time_stamp - delta for time_stamp in data["commence_time"]]
 
         # Order is kind of random, so we cannot trust that the provider
         # arranged home team first, then away in the teams list.
@@ -157,6 +158,14 @@ class TheOddsAPI:
             print("Loading from cache")
 
         return self.clean_betting_lines(pd.read_json(cache_file_name))
+
+    def get_matches(self, strf):
+        """ Get matches with odds. """
+        games = [
+            f"{row.date.strftime(strf)} {row.home_team} x {row.away_team}"
+            for row in self.betting_lines().itertuples()
+        ]
+        return "\n".join(games)
 
 
 def get_club_id(club_names: Sequence[str]) -> List[int]:
@@ -232,3 +241,15 @@ def get_clubs_with_odds(
 
     # Merge them.
     return merge_clubs_and_odds(clubs, odds)
+
+
+def get_matches(
+    key: str,
+    strf: str,
+    cache_folder: Optional[str] = None,
+    cache_file: Optional[str] = None,
+) -> str:
+    """ Get matches that that have odds available. """
+    # Get odds dataset.
+    odds_api = TheOddsAPI(key=key, cache_folder=cache_folder, cache_file=cache_file)
+    return odds_api.get_matches(strf=strf)

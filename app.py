@@ -95,7 +95,9 @@ with open(os.path.join(THIS_FOLDER, "SOBRE.md"), encoding="utf-8") as file:
     about = file.read()
 st.sidebar.markdown(about)
 
-if os.path.exists(os.path.join(THIS_FOLDER, "cache")):
-    st.text("Data was loaded from cached data.")
-else:
-    st.write("Data was requested by the API.")
+st.header("Partidas Consideradas")
+st.text(
+    palpiteiro.data.get_matches(
+        key=key, strf="%d/%m/%y", cache_folder=os.path.join(THIS_FOLDER, "cache")
+    )
+)
