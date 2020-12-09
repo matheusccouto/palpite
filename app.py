@@ -13,9 +13,10 @@ import palpiteiro.draft
 APP_NAME = "Palpiteiro"
 SUBTITLE = "Recomendação de escalações para o Cartola FC"
 THIS_FOLDER = os.path.dirname(__file__)
+FAVICON = os.path.join("img", "soccerball.png")
 
 # Page title and configs.
-st.set_page_config(page_title=APP_NAME)
+st.set_page_config(page_title=APP_NAME, page_icon=FAVICON)
 st.title(APP_NAME)
 st.text(SUBTITLE)
 
@@ -98,6 +99,6 @@ st.sidebar.markdown(about)
 st.header("Partidas Consideradas")
 st.text(
     palpiteiro.data.get_matches(
-        key=key, strf="%d/%m/%y", cache_folder=os.path.join(THIS_FOLDER, "cache")
+        key=key, strf="%d/%m/%y", clubs=clubs, cache_folder=os.path.join(THIS_FOLDER, "cache")
     )
 )

@@ -246,10 +246,25 @@ def get_clubs_with_odds(
 def get_matches(
     key: str,
     strf: str,
+    clubs: pd.DataFrame,
     cache_folder: Optional[str] = None,
     cache_file: Optional[str] = None,
 ) -> str:
     """ Get matches that that have odds available. """
     # Get odds dataset.
     odds_api = TheOddsAPI(key=key, cache_folder=cache_folder, cache_file=cache_file)
-    return odds_api.get_matches(strf=strf)
+    matches = odds_api.get_matches(strf=strf)
+
+    # Read clubs names.
+    with open(os.path.join(THIS_FOLDER, "data", "clubs_names.json"), encoding="utf-8") as file:
+        clubs_names = json.load(file)["nome"]
+
+    # Transform clubs into IDs
+    for id_, names in clubs_names.items():
+        for name in names:
+            if name in matches:
+                cartola_name = clubs.loc[int(id_)]["nome"]
+                matches = matches.replace(f" {name}", f" {cartola_name}")
+
+    return matches
+
