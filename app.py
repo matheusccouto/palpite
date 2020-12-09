@@ -74,10 +74,10 @@ line_up_table["Player"] = line_up_table.apply(
     axis=1,
 )
 line_up_table["Club"] = line_up_table.apply(
-    lambda x: helper.create_html_tag(photo=x["Club Photo"], name=x["Club"], height=32),
+    lambda x: helper.create_html_tag(photo=x["Club Photo"], height=32),
     axis=1,
 )
-line_up_table = line_up_table[["Position Name", "Player", "Club"]]
+line_up_table = line_up_table[["Position Name", "Club", "Player"]]
 
 # Transform into html and show on app.
 html_table = line_up_table.to_html(escape=False, header=False, index=False, border=0)
