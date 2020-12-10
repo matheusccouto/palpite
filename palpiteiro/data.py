@@ -73,10 +73,16 @@ class TheOddsAPI:
         self.key = key
         self.cache_folder = "cache" if cache_folder is None else cache_folder
         self.cache_file = (
-            f"{datetime.datetime.now().date()}.json"
+            f"{self._cache_file_name(datetime.datetime.now())}.json"
             if cache_file is None
             else cache_file
         )
+
+    @staticmethod
+    def _cache_file_name(time: datetime.datetime):
+        """ Create cache file name. """
+        hour = max([hour for hour in range(0, 24, 3) if hour < time.hour])
+        return f"{time.date()}-{hour}.json"
 
     @staticmethod
     def clean_betting_lines(data: pd.DataFrame) -> pd.DataFrame:
@@ -256,7 +262,9 @@ def get_matches(
     matches = odds_api.get_matches(strf=strf)
 
     # Read clubs names.
-    with open(os.path.join(THIS_FOLDER, "data", "clubs_names.json"), encoding="utf-8") as file:
+    with open(
+        os.path.join(THIS_FOLDER, "data", "clubs_names.json"), encoding="utf-8"
+    ) as file:
         clubs_names = json.load(file)["nome"]
 
     # Transform clubs into IDs
@@ -267,4 +275,3 @@ def get_matches(
                 matches = matches.replace(f" {name}", f" {cartola_name}")
 
     return matches
-
