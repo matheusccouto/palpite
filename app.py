@@ -65,7 +65,7 @@ if len(clubs_names) == 0:
     st.error(
         "Não foi possível preparar uma escalação porque "
         "ainda não há cotações disponíveis para as próximas partidas. "
-        "Tente novamente amanhã."
+        "Tente novamente mais tarde."
     )
     st.stop()
 
