@@ -53,16 +53,46 @@ players = [player for player in players if player.club.name in selected_clubs]
 # Select schemes.
 schemes = st.sidebar.multiselect("Esquemas Táticos", options=schemes, default=schemes)
 
+# Exceptions handling.
+
+# If there isn't no games.
+if len(clubs_names) == 0:
+    st.error(
+        "Não foi possível preparar uma escalação porque "
+        "ainda não há cotações disponíveis para as próximas partidas. "
+        "Tente novamente amanhã."
+    )
+    st.stop()
+
+# If the player selected no clubs.
+if len(selected_clubs) == 0:
+    st.error("Você deve selecionar pelo menos um time.")
+    st.stop()
+
+# If the player selected no schemes.
+if len(schemes) == 0:
+    st.error("Você deve selecionar pelo menos uma formação tática.")
+    st.stop()
+
 # Get line up.
 with st.spinner("Por favor aguarde enquanto o algoritmo escolhe os jogadores..."):
-    line_up = palpiteiro.draft.draft(
-        individuals=100,
-        generations=50,
-        players=players,
-        schemes=schemes,
-        max_price=money,
-        tournament_size=5,
-    )
+    try:
+        line_up = palpiteiro.draft.draft(
+            individuals=100,
+            generations=50,
+            players=players,
+            schemes=schemes,
+            max_price=money,
+            tournament_size=5,
+        )
+    except RecursionError:
+        st.error(
+            "Não foi possível montar um escalação para esta quantidade de cartoletas "
+            "com os times e formações táticas selecionados. "
+            "Experimente adicionar mais time e formações táticas, "
+            "ou aumentar a quantidade de cartoletas."
+        )
+        st.stop()
 
 # Show line up.
 st.header("Aqui está a sua escalação")
@@ -74,8 +104,7 @@ line_up_table["Player"] = line_up_table.apply(
     axis=1,
 )
 line_up_table["Club"] = line_up_table.apply(
-    lambda x: helper.create_html_tag(photo=x["Club Photo"], height=32),
-    axis=1,
+    lambda x: helper.create_html_tag(photo=x["Club Photo"], height=32), axis=1,
 )
 line_up_table = line_up_table[["Position Name", "Club", "Player"]]
 
@@ -99,6 +128,9 @@ st.sidebar.markdown(about)
 st.header("Partidas Consideradas")
 st.text(
     palpiteiro.data.get_matches(
-        key=key, strf="%d/%m/%y", clubs=clubs, cache_folder=os.path.join(THIS_FOLDER, "cache")
+        key=key,
+        strf="%d/%m/%y",
+        clubs=clubs,
+        cache_folder=os.path.join(THIS_FOLDER, "cache"),
     )
 )
