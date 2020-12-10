@@ -1,5 +1,6 @@
 """ palpiteiro.data unit-tests. """
 
+import datetime
 import os
 
 import pandas as pd
@@ -27,6 +28,14 @@ class TestTheOddsAPI:
         cache = odds_api.clean_betting_lines(cache)
 
         pd.testing.assert_frame_equal(loaded, cache)
+
+    def test_cache_file_name(self):
+        """ Test _cache_file_name method. """
+        datetime_ = datetime.datetime(
+            year=2020, month=12, day=10, hour=11, minute=20, second=0
+        )
+        name = palpiteiro.data.TheOddsAPI._cache_file_name(datetime_)
+        assert name == "2020-12-10-9.json"
 
 
 class TestClubsAndOddsMerge:
