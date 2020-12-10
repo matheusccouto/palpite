@@ -53,6 +53,11 @@ players = [player for player in players if player.club.name in selected_clubs]
 # Select schemes.
 schemes = st.sidebar.multiselect("Esquemas Táticos", options=schemes, default=schemes)
 
+# About the app
+with open(os.path.join(THIS_FOLDER, "SOBRE.md"), encoding="utf-8") as file:
+    about = file.read()
+st.sidebar.markdown(about)
+
 # Exceptions handling.
 
 # If there isn't no games.
@@ -119,11 +124,6 @@ st.header("Informações Gerais")
 st.text(f"Esquema Tático\t\t{line_up.scheme}")
 st.text(f"Pontuação Esperada\t{line_up.predicted_points:.1f} pontos")
 st.text(f"Custo Total\t\t{line_up.price:.1f} cartoletas")
-
-# About the app
-with open(os.path.join(THIS_FOLDER, "SOBRE.md"), encoding="utf-8") as file:
-    about = file.read()
-st.sidebar.markdown(about)
 
 st.header("Partidas Consideradas")
 st.text(
