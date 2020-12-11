@@ -47,7 +47,7 @@ class Club:
     @property
     def logo(self) -> str:
         """ Club logo. """
-        return self._series["escudos"]["30x30"]
+        return self._series["escudos"]["45x45"]
 
     @property
     def win_odds(self) -> float:
