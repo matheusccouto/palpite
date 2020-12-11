@@ -105,7 +105,7 @@ st.header("Aqui está a sua escalação")
 # Arrange data.
 line_up_table = line_up.dataframe
 line_up_table["Player"] = line_up_table.apply(
-    lambda x: helper.create_html_tag(photo=x["Photo"], name=x["Name"], height=64),
+    lambda x: helper.create_html_tag(photo=x["Photo"], name=x["Name"], height=32),
     axis=1,
 )
 line_up_table["Club"] = line_up_table.apply(
