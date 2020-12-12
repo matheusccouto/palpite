@@ -81,11 +81,12 @@ def mutate_line_up(
     # Run it in a infinity loops until it finds a valid scheme.
     for _ in range(1000):
 
-        # Choose a player from this position.
+        # Filter available players.
+        # TODO: The next statement takes 86% of all running time. Improve it.
         available_players = [
             player
             for player in players
-            if (player not in line_up) and (player.price < max_player_price)
+            if (player not in line_up.players) and (player.price < max_player_price)
         ]
 
         if len(available_players) == 0:
@@ -100,7 +101,7 @@ def mutate_line_up(
         line_up[idx] = new_player
 
         # If the formed scheme is equal any valid scheme returns the line up.
-        if any([line_up.scheme == scheme for scheme in schemes]):
+        if line_up.scheme in schemes:
             return assign_captain(line_up)
 
     raise RecursionError("Couldn't form a valid scheme.")

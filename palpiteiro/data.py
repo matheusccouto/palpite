@@ -12,6 +12,17 @@ import requests
 THIS_FOLDER = os.path.dirname(__file__)
 
 
+def request_to_dict(url: str, key: Optional[str] = None, **kwargs) -> pd.DataFrame:
+    """ Create dict from request data. """
+    data = requests.get(url, verify=False, **kwargs).json()
+
+    # If specified some inner key.
+    if key is not None:
+        data = data[key]
+
+    return data
+
+
 def request_to_df(url: str, key: Optional[str] = None, **kwargs) -> pd.DataFrame:
     """ Create dataframe from request data. """
     data = requests.get(url, verify=False, **kwargs).json()
