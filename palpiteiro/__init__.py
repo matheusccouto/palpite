@@ -285,6 +285,17 @@ class Scheme:
             6: self.coaches,
         }
 
+    def is_position_open(self, position: int, schemes: Sequence["Scheme"]) -> bool:
+        """ Check if a position can be filled. """
+        scheme_dict = self.dict.copy()
+        scheme_dict[position] += 1
+        return any([scheme_dict == other.dict for other in schemes])
+
+    def open_positions(self, schemes: Sequence["Scheme"]) -> List[int]:
+        """ Get positions that can be filled. """
+        # Avoid inplace
+        return [pos for pos in self.dict.keys() if self.is_position_open(pos, schemes)]
+
 
 def create_schemes(schemes: pd.DataFrame) -> List[Scheme]:
     """ Create valid schemes list. """
@@ -316,6 +327,7 @@ class LineUp:
 
     def __init__(self, players: Sequence[Player]):
         self.players = list(players)
+        self.players_ids = {player.id for player in self.players}
         self._captain: Optional[Player] = None
 
     def __eq__(self, other: "LineUp") -> bool:
@@ -324,7 +336,7 @@ class LineUp:
         return these_players == other_players
 
     def __contains__(self, item: Player) -> bool:
-        return item in self.players
+        return item.id in self.players_ids
 
     def __getitem__(self, key: int) -> Player:
         return self.players[key]
@@ -342,7 +354,7 @@ class LineUp:
         players_list = [
             str(player) for player in sorted(self.players, key=lambda x: x.position)
         ]
-        return f"LineUp{players_list}"
+        return f"LineUp {self.scheme} {', '.join(players_list)}"
 
     def __repr__(self) -> str:
         return f"<{self.__str__()}>"
@@ -350,6 +362,12 @@ class LineUp:
     def add(self, player: Player) -> None:
         """ Add player to the line up. """
         self.players.append(player)
+        self.players_ids.add(player.id)
+
+    def remove(self, player: Player) -> None:
+        """ Remove player from the line up. """
+        self.players.remove(player)
+        self.players_ids.remove(player.id)
 
     def is_valid(self, schemes: Sequence[Scheme]):
         """ Checks if the line-up is valid. """

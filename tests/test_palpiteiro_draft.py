@@ -85,7 +85,7 @@ class TestMutateLineUp:
     def test_perfomance(self):
         """ Test if it runs functions 100 times in less than a second. """
         start = time.time()
-        for _ in range(100):
+        for _ in range(1000):
             palpiteiro.draft.mutate_line_up(self.line_up, players, schemes, 1e6)
         end = time.time()
         assert end - start < 1  # seconds
@@ -121,8 +121,8 @@ class TestDraft:
     def test_duplicates(self):
         """ Make sure there aren't duplicates on the final team. """
         best_line_up = palpiteiro.draft.draft(
-            individuals=50,
-            generations=10,
+            individuals=200,
+            generations=100,
             players=players,
             schemes=schemes,
             max_price=1e6,
@@ -134,11 +134,24 @@ class TestDraft:
     def test_draft(self):
         """ Test main functionality. """
         best_line_up = palpiteiro.draft.draft(
-            individuals=50,
-            generations=10,
+            individuals=200,
+            generations=100,
             players=players,
             schemes=schemes,
             max_price=100,
             tournament_size=5,
         )
         assert best_line_up.points > 0
+
+    def test_convergence(self):
+        """ Test if it converges to a single solution. """
+        line_ups = [palpiteiro.draft.draft(
+            individuals=100,
+            generations=1000,
+            players=players,
+            schemes=schemes,
+            max_price=100,
+            tournament_size=5,
+        ) for _ in range(2)]
+
+        assert line_ups[0] == line_ups[-1]
