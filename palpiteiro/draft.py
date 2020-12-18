@@ -61,6 +61,17 @@ def random_line_up(
     return assign_captain(line_up)
 
 
+def available_players_generator(
+    players: Sequence[palpiteiro.Player],
+    line_up: palpiteiro.LineUp,
+    max_player_price: float,
+):
+    """ Available players generator"""
+    for player in players:
+        if (player not in line_up.players) and (player.price < max_player_price):
+            yield player
+
+
 def mutate_line_up(
     line_up: palpiteiro.LineUp,
     players: Sequence[palpiteiro.Player],
@@ -71,39 +82,36 @@ def mutate_line_up(
     # Avoid inplace transformations.
     line_up = line_up.copy()
 
-    # Choose a random player index.
-    idx = random.choice(range(len(line_up)))
+    # Choose a random player to remove.
+    player_to_remove = random.choice(line_up)
+    line_up.remove(player_to_remove)
+
+    positions = line_up.scheme.open_positions(schemes)
 
     # Estimate the maximum price that the new player can cost.
-    max_player_price = max_price - (line_up.price - line_up[idx].price)
+    max_player_price = max_price - line_up.price
 
-    # Select the new player and check if it forms a viable scheme.
-    # Run it in a infinity loops until it finds a valid scheme.
-    for _ in range(1000):
+    # Filter available players.
+    available_players = [
+        player
+        for player in players
+        if (player not in line_up.players)
+        and (player.position in positions)
+        and (player.price < max_player_price)
+    ]
 
-        # Choose a player from this position.
-        available_players = [
-            player
-            for player in players
-            if (player not in line_up) and (player.price < max_player_price)
-        ]
+    if len(available_players) == 0:
+        # If no available player. Apply recursion.
+        return mutate_line_up(
+            line_up=line_up, players=players, schemes=schemes, max_price=max_price,
+        )
 
-        if len(available_players) == 0:
-            # If no available player. Apply recursion.
-            return mutate_line_up(
-                line_up=line_up, players=players, schemes=schemes, max_price=max_price,
-            )
+    new_player = random.choice(available_players)
 
-        new_player = random.choice(available_players)
+    # Add new player.
+    line_up.add(new_player)
 
-        # Change an old player with new player.
-        line_up[idx] = new_player
-
-        # If the formed scheme is equal any valid scheme returns the line up.
-        if any([line_up.scheme == scheme for scheme in schemes]):
-            return assign_captain(line_up)
-
-    raise RecursionError("Couldn't form a valid scheme.")
+    return assign_captain(line_up)
 
 
 def crossover_line_up(
@@ -159,14 +167,10 @@ def draft(
     max_price: float,
     tournament_size: int,
     elite: int = 1,
-    early_stopping: bool = True,
 ) -> palpiteiro.LineUp:
     """ Draft best team possible using genetic algorithm. """
     # Create initial population.
     pop = [random_line_up(players, schemes, max_price) for _ in range(individuals)]
-
-    # Record fitness throughout the generations.
-    fitness_history = []
 
     # Run for the selected number of generations.
     for i in range(generations):
@@ -174,14 +178,7 @@ def draft(
         # Rank entire population.
         pop = sorted(pop, key=lambda x: x.predicted_points, reverse=True)
 
-        fitness_history.append(pop[0].predicted_points)
-        if (
-            early_stopping
-            and len(fitness_history) >= 10
-            and len(set(fitness_history[-10:])) == 1
-        ):
-            return pop[0]
-
+        # Create new population.
         new_pop = []
         while len(new_pop) < individuals:
 

@@ -19,11 +19,11 @@ class Club:
     Uses Cartola FC API IDs.
     """
 
-    def __init__(self, club_id: int, clubs: pd.DataFrame):
+    def __init__(self, club_id: int, clubs: dict):
         self.id = club_id
         self.clubs = clubs
         # Transform in dict to improve performance.
-        self._series = self.clubs.loc[self.id].to_dict()
+        self._dict = self.clubs[self.id]
 
     def __eq__(self, other: "Club") -> bool:
         return self.id == other.id
@@ -37,32 +37,32 @@ class Club:
     @property
     def name(self) -> str:
         """ Club name. """
-        return self._series["nome"]
+        return self._dict["nome"]
 
     @property
     def abbreviation(self) -> str:
         """ Club abbreviation. """
-        return self._series["abreviacao"]
+        return self._dict["abreviacao"]
 
     @property
     def logo(self) -> str:
         """ Club logo. """
-        return self._series["escudos"]["45x45"]
+        return self._dict["escudos"]["45x45"]
 
     @property
     def win_odds(self) -> float:
         """ Odds of winning in the next match. """
-        return self._series["win_odds"]
+        return self._dict["win_odds"]
 
     @property
     def draw_odds(self) -> float:
         """ Odds of drawing in the next match. """
-        return self._series["draw_odds"]
+        return self._dict["draw_odds"]
 
     @property
     def lose_odds(self) -> float:
         """ Odds of losing in the next match. """
-        return self._series["lose_odds"]
+        return self._dict["lose_odds"]
 
 
 class Player:
@@ -97,17 +97,16 @@ class Player:
     }
 
     def __init__(
-        self, player_id: int, players: pd.DataFrame, clubs: pd.DataFrame,
+        self, player_id: int, players: dict, clubs: dict,
     ):
         self.id = player_id
         self.players = players
         self.clubs = clubs
 
-        # Transform in dict to improve performance.
-        self._series = players.loc[self.id].to_dict()
+        self._dict = players[self.id]
 
         # Get player club.
-        self.club = Club(club_id=self._series["clube_id"], clubs=self.clubs)
+        self.club = Club(club_id=self._dict["clube_id"], clubs=self.clubs)
 
         self.predicted_points = 0
         self.update_predicted_points()
@@ -124,17 +123,17 @@ class Player:
     @property
     def name(self) -> str:
         """ Player name. """
-        return self._series["apelido"]
+        return self._dict["apelido"]
 
     @property
     def photo(self) -> str:
         """ Player photo. """
-        return self._series["foto"].replace("_FORMATO", "_140x140")
+        return self._dict["foto"].replace("_FORMATO", "_140x140")
 
     @property
     def position(self) -> int:
         """ Player position. """
-        return self._series["posicao_id"]
+        return self._dict["posicao_id"]
 
     @property
     def position_abbreviation(self) -> str:
@@ -144,37 +143,37 @@ class Player:
     @property
     def status(self) -> int:
         """ Player status. """
-        return self._series["status_id"]
+        return self._dict["status_id"]
 
     @property
     def matches(self) -> int:
         """ Player amount of played matches. """
-        return self._series["jogos_num"]
+        return self._dict["jogos_num"]
 
     @property
     def points(self) -> float:
         """ Player points on club's last match. """
-        return self._series["pontos_num"]
+        return self._dict["pontos_num"]
 
     @property
     def mean(self) -> float:
         """ Player mean points considering matches he has played. """
-        return self._series["media_num"]
+        return self._dict["media_num"]
 
     @property
     def price(self) -> float:
         """ Player price. """
-        return self._series["preco_num"]
+        return self._dict["preco_num"]
 
     @property
     def variation(self) -> float:
         """ Player price variation. """
-        return self._series["variacao_num"]
+        return self._dict["variacao_num"]
 
     @property
     def scouts(self) -> Dict[str, int]:
         """ Player scouts. """
-        return self._series["scout"]
+        return self._dict["scout"]
 
     @property
     def win_odds(self) -> float:
@@ -233,7 +232,9 @@ class Player:
 
 def create_all_players(players: pd.DataFrame, clubs: pd.DataFrame) -> List[Player]:
     """ Create all players from a players dataframe. """
-    return [Player(i, players, clubs) for i in players.index]
+    players_dict = players.to_dict(orient="index")
+    clubs_dict = clubs.to_dict(orient="index")
+    return [Player(i, players_dict, clubs_dict) for i in players.index]
 
 
 class Scheme:
@@ -284,6 +285,17 @@ class Scheme:
             6: self.coaches,
         }
 
+    def is_position_open(self, position: int, schemes: Sequence["Scheme"]) -> bool:
+        """ Check if a position can be filled. """
+        scheme_dict = self.dict.copy()
+        scheme_dict[position] += 1
+        return any([scheme_dict == other.dict for other in schemes])
+
+    def open_positions(self, schemes: Sequence["Scheme"]) -> List[int]:
+        """ Get positions that can be filled. """
+        # Avoid inplace
+        return [pos for pos in self.dict.keys() if self.is_position_open(pos, schemes)]
+
 
 def create_schemes(schemes: pd.DataFrame) -> List[Scheme]:
     """ Create valid schemes list. """
@@ -315,6 +327,7 @@ class LineUp:
 
     def __init__(self, players: Sequence[Player]):
         self.players = list(players)
+        self.players_ids = {player.id for player in self.players}
         self._captain: Optional[Player] = None
 
     def __eq__(self, other: "LineUp") -> bool:
@@ -323,7 +336,7 @@ class LineUp:
         return these_players == other_players
 
     def __contains__(self, item: Player) -> bool:
-        return item in self.players
+        return item.id in self.players_ids
 
     def __getitem__(self, key: int) -> Player:
         return self.players[key]
@@ -341,7 +354,7 @@ class LineUp:
         players_list = [
             str(player) for player in sorted(self.players, key=lambda x: x.position)
         ]
-        return f"LineUp{players_list}"
+        return f"LineUp {self.scheme} {', '.join(players_list)}"
 
     def __repr__(self) -> str:
         return f"<{self.__str__()}>"
@@ -349,6 +362,12 @@ class LineUp:
     def add(self, player: Player) -> None:
         """ Add player to the line up. """
         self.players.append(player)
+        self.players_ids.add(player.id)
+
+    def remove(self, player: Player) -> None:
+        """ Remove player from the line up. """
+        self.players.remove(player)
+        self.players_ids.remove(player.id)
 
     def is_valid(self, schemes: Sequence[Scheme]):
         """ Checks if the line-up is valid. """
