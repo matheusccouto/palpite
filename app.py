@@ -86,7 +86,7 @@ if st.button("Escalar"):
         try:
             line_up = palpiteiro.draft.draft(
                 individuals=100,
-                generations=100,
+                generations=1000,
                 players=players,
                 schemes=schemes,
                 max_price=money,
