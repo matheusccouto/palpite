@@ -327,7 +327,6 @@ class LineUp:
 
     def __init__(self, players: Sequence[Player]):
         self.players = list(players)
-        self.players_ids = {player.id for player in self.players}
         self._captain: Optional[Player] = None
 
     def __eq__(self, other: "LineUp") -> bool:
@@ -336,7 +335,7 @@ class LineUp:
         return these_players == other_players
 
     def __contains__(self, item: Player) -> bool:
-        return item.id in self.players_ids
+        return item in self.players
 
     def __getitem__(self, key: int) -> Player:
         return self.players[key]
@@ -362,12 +361,10 @@ class LineUp:
     def add(self, player: Player) -> None:
         """ Add player to the line up. """
         self.players.append(player)
-        self.players_ids.add(player.id)
 
     def remove(self, player: Player) -> None:
         """ Remove player from the line up. """
         self.players.remove(player)
-        self.players_ids.remove(player.id)
 
     def is_valid(self, schemes: Sequence[Scheme]):
         """ Checks if the line-up is valid. """

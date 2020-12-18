@@ -134,12 +134,9 @@ class TestDraft:
     def test_draft(self):
         """ Test main functionality. """
         best_line_up = palpiteiro.draft.draft(
-            individuals=200,
-            generations=100,
             players=players,
             schemes=schemes,
             max_price=100,
-            tournament_size=5,
         )
         assert best_line_up.points > 0
 
