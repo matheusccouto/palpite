@@ -235,9 +235,8 @@ def merge_clubs_and_odds(clubs: pd.DataFrame, odds: pd.DataFrame) -> pd.DataFram
     odds = odds_home.append(odds_away)
     # If a team has two games on the odds data frame, keep only the first.
     odds = odds.sort_values("date")[["win_odds", "draw_odds", "lose_odds"]]
-    index = odds.index.drop_duplicates()
-    odds = odds.loc[index]
-
+    odds = odds[~odds.index.duplicated(keep='first')
+]
     # Merge clubs and odds dataframes. Make sure both indexes are from the same type
     odds.index = odds.index.astype(int)
     clubs.index = clubs.index.astype(int)

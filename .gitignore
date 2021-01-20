@@ -4,6 +4,9 @@ tests/profile*
 # Personal keys.
 **/keys.py
 
+# VSCode
+.vscode
+
 # PyCharm
 .idea
 
