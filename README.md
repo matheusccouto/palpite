@@ -1,7 +1,7 @@
 # Palpiteiro
 Recommendation app for the brazilian fantasy soccer game Cartola FC.
 
-Vist the app at [palpiteiro.herokuapp.com](https://palpiteiro.herokuapp.com/)
+Vist the app at [streamlit share](https://share.streamlit.io/matheusccouto/palpiteiro/main/app.py)
 
 ## About
 Palpiteiro (Guesser in English) uses a machine learning predictive algorithms and a
