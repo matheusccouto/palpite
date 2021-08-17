@@ -92,7 +92,7 @@ class TheOddsAPI:
     @staticmethod
     def _cache_file_name(time: datetime.datetime):
         """ Create cache file name. """
-        hour = max([hour for hour in range(0, 24, 3) if hour < time.hour])
+        hour = max([hour for hour in range(0, 24, 3) if hour <= time.hour])
         return f"{time.date()}-{hour}.json"
 
     @staticmethod
