@@ -26,7 +26,7 @@ st.sidebar.title("Configurações")
 money = st.sidebar.number_input("Cartoletas", min_value=0.0, value=100.0, format="%.1f")
 
 # Get clubs.
-key = os.environ.get("THE_ODDS_API")
+key = st.secrets["THE_ODDS_API"]
 clubs = palpiteiro.data.get_clubs_with_odds(
     key=key, cache_folder=os.path.join(THIS_FOLDER, "cache")
 )
